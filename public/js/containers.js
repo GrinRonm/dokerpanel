@@ -76,8 +76,8 @@ const Containers = {
                             <button class="btn btn-icon btn-ghost" title="Остановить" onclick="Containers.action('${c.id}','stop')">⏹</button>
                             <button class="btn btn-icon btn-ghost" title="Перезапустить" onclick="Containers.action('${c.id}','restart')">🔄</button>
                         ` : `
-                            <button class="btn btn-icon btn-ghost" title="Запустить" onclick="Containers.action('${c.id}','start')">▶</button>
                         `}
+                        <button class="btn btn-icon btn-ghost" title="Редактировать" onclick="Containers.edit('${c.id}')">✏️</button>
                         <button class="btn btn-icon btn-ghost text-danger" title="Удалить" onclick="Containers.action('${c.id}','remove')">🗑</button>
                     </div>
                 </td>
@@ -137,8 +137,22 @@ const Containers = {
             `, { width: '700px' });
         } catch (e) { App.error(e.message); }
     },
+    async edit(id) {
+        try {
+            const res = await App.get('/containers/detail?id=' + id);
+            if (res && res.data) {
+                // Если есть db_id и config, редактируем
+                const config = res.data.config || {};
+                config._db_id = res.data.db_id;
+                config._name = res.data.name;
+                this.showCreateForm(config);
+            }
+        } catch (e) {
+            App.error('Ошибка получения контейнера: ' + e.message);
+        }
+    },
 
-    async showCreateForm() {
+    async showCreateForm(editConfig = null) {
         let templatesOptions = '<option value="">-- Не использовать шаблон --</option>';
         try {
             const res = await App.get('/templates');
@@ -157,15 +171,16 @@ const Containers = {
             <div class="fade-in">
                 <div class="page-header">
                     <div>
-                        <h1 class="page-title">Создать контейнер</h1>
-                        <p class="page-subtitle">Настройте параметры нового контейнера</p>
+                        <h1 class="page-title">${editConfig ? 'Редактировать контейнер' : 'Создать контейнер'}</h1>
+                        <p class="page-subtitle">${editConfig ? 'Измените параметры и сохраните (контейнер будет пересоздан)' : 'Настройте параметры нового контейнера'}</p>
                     </div>
                     <button class="btn btn-secondary" onclick="App.navigateTo('containers')">← Назад</button>
                 </div>
 
                 <div class="card" style="max-width:800px">
-                    <form id="create-container-form" onsubmit="Containers.createSubmit(event)">
+                    <form id="create-container-form" onsubmit="Containers.createSubmit(event, ${editConfig ? editConfig._db_id : 'null'})">
                         
+                        ${!editConfig ? `
                         <div class="form-group mb-3 pb-3" style="border-bottom: 1px solid var(--border-color)">
                             <label class="form-label">Выбрать готовый шаблон</label>
                             <select class="form-control" id="template-select" onchange="Containers.applyTemplate(this.value)">
@@ -173,6 +188,7 @@ const Containers = {
                             </select>
                             <small class="text-muted">Выбор шаблона автоматически заполнит поля ниже.</small>
                         </div>
+                        ` : ''}
 
                         <div class="form-row">
                             <div class="form-group">
@@ -268,13 +284,57 @@ const Containers = {
 
                         <div class="d-flex justify-between mt-3">
                             <button type="button" class="btn btn-secondary" onclick="App.navigateTo('containers')">Отмена</button>
-                            <button type="submit" class="btn btn-primary btn-lg">🚀 Создать контейнер</button>
+                            <button type="submit" class="btn btn-primary btn-lg">🚀 ${editConfig ? 'Сохранить изменения' : 'Создать контейнер'}</button>
                         </div>
                     </form>
                 </div>
             </div>
-            </div>
         `);
+
+        if (editConfig) {
+            const form = document.getElementById('create-container-form');
+            form.name.value = editConfig._name || '';
+            form.image.value = (editConfig.image || '').split(':')[0] || '';
+            form.tag.value = (editConfig.image || '').split(':')[1] || 'latest';
+            form.cmd.value = editConfig.cmd || '';
+            form.cpu.value = editConfig.cpu || '1';
+            form.ram.value = editConfig.ram || '512m';
+            form.restart.value = editConfig.restart || 'unless-stopped';
+            form.privileged.checked = !!editConfig.privileged;
+            if (editConfig.network) form.network.value = editConfig.network;
+
+            // Заполняем динамические поля
+            const portsContainer = document.getElementById('ports-container');
+            portsContainer.innerHTML = '';
+            if (editConfig.ports && editConfig.ports.length) {
+                editConfig.ports.forEach(p => this.addPortRow(p.host || '', p.container || ''));
+            } else {
+                this.addPortRow();
+            }
+
+            const envContainer = document.getElementById('env-container');
+            envContainer.innerHTML = '';
+            if (editConfig.env && editConfig.env.length) {
+                editConfig.env.forEach(e => this.addEnvRow(e.name || '', e.value || ''));
+            } else {
+                this.addEnvRow();
+            }
+
+            const volumesContainer = document.getElementById('volumes-container');
+            volumesContainer.innerHTML = '';
+            if (editConfig.volumes && editConfig.volumes.length) {
+                editConfig.volumes.forEach(v => this.addVolRow(v.host || '', v.container || ''));
+            } else {
+                this.addVolRow();
+            }
+            
+            // Сохраняем скрытые поля
+            window._editTmpfs = editConfig.tmpfs || [];
+            window._editCgroupns = editConfig.cgroupns || '';
+        } else {
+            window._editTmpfs = null;
+            window._editCgroupns = null;
+        }
     },
 
     applyTemplate(id) {
@@ -388,12 +448,13 @@ const Containers = {
         container.appendChild(row);
     },
 
-    async createSubmit(e) {
+    async createSubmit(e, editId = null) {
         e.preventDefault();
         const form = e.target;
         const btn = form.querySelector('[type="submit"]');
+        const originalBtnHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div> Создание...';
+        btn.innerHTML = '<div class="spinner"></div> ' + (editId ? 'Сохранение...' : 'Создание (может занять время)...');
 
         // Собираем порты
         const ports = [];
@@ -419,9 +480,10 @@ const Containers = {
             if (container) volumes.push({ host: host || '', container });
         });
 
+        let tmpfs = window._editTmpfs !== null ? window._editTmpfs : [];
+        let cgroupns = window._editCgroupns !== null ? window._editCgroupns : '';
+
         const templateSelect = document.getElementById('template-select');
-        let tmpfs = [];
-        let cgroupns = '';
         if (templateSelect && templateSelect.value) {
             const t = (window._loadedTemplates || []).find(x => x.id == templateSelect.value);
             if (t && t.config) {
@@ -443,14 +505,21 @@ const Containers = {
             ports, env, volumes, tmpfs, cgroupns
         };
 
+        if (editId) body.id = editId;
+
         try {
-            await App.post('/containers/create', body);
-            App.success('Контейнер создан!');
+            if (editId) {
+                await App.post('/containers/update', body);
+                App.success('Контейнер обновлён!');
+            } else {
+                await App.post('/containers/create', body);
+                App.success('Контейнер создан!');
+            }
             App.navigateTo('containers');
         } catch (e) {
             App.error(e.message);
             btn.disabled = false;
-            btn.innerHTML = '🚀 Создать контейнер';
+            btn.innerHTML = originalBtnHtml;
         }
     },
 

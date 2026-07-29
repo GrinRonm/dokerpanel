@@ -122,9 +122,10 @@ class ContainerController {
             // Запустить
             $this->docker->startContainer($containerId);
 
-            // Если это шаблон Ubuntu Systemd, устанавливаем базовые утилиты в фоне
+            // Если это шаблон Ubuntu Systemd, устанавливаем базовые утилиты (синхронно, чтобы дождаться установки)
             if (strpos($fullImage, 'systemd-ubuntu') !== false) {
-                $cmd = "docker exec -d {$containerId} bash -c 'sleep 5 && apt-get update && apt-get install -y curl wget sudo nano net-tools iproute2'";
+                // Спим 2 сек для старта сети systemd, затем ставим пакеты без -d (синхронно)
+                $cmd = "docker exec {$containerId} bash -c 'sleep 2 && apt-get update && apt-get install -y curl wget sudo nano net-tools iproute2'";
                 shell_exec($cmd);
             }
 
@@ -145,6 +146,72 @@ class ContainerController {
             Response::success(['id' => $containerId, 'name' => $data['name']], 'Контейнер создан');
         } catch (\Exception $e) {
             Response::error('Ошибка создания: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Обновить (редактировать) контейнер
+     */
+    public function update(): void {
+        $data = Validator::jsonBody();
+        $id = (int)($data['id'] ?? 0);
+        
+        if (!$id) Response::error('ID контейнера не указан');
+
+        $db = Database::getInstance();
+        $stmt = $db->prepare('SELECT * FROM containers WHERE id = ?');
+        $stmt->execute([$id]);
+        $container = $stmt->fetch();
+
+        if (!$container) Response::error('Контейнер не найден');
+
+        try {
+            $image = $data['image'];
+            $tag = $data['tag'] ?? 'latest';
+            $fullImage = "{$image}:{$tag}";
+
+            $this->docker->pullImage($image, $tag);
+
+            $config = [
+                'image' => $fullImage,
+                'cmd' => $data['cmd'] ?? '',
+                'env' => $data['env'] ?? [],
+                'ports' => $data['ports'] ?? [],
+                'volumes' => $data['volumes'] ?? [],
+                'tmpfs' => $data['tmpfs'] ?? [],
+                'cgroupns' => $data['cgroupns'] ?? '',
+                'cpu' => $data['cpu'] ?? DEFAULT_CPU_LIMIT,
+                'ram' => $data['ram'] ?? DEFAULT_RAM_LIMIT,
+                'restart' => $data['restart'] ?? 'unless-stopped',
+                'network' => $data['network'] ?? '',
+                'privileged' => $data['privileged'] ?? false,
+            ];
+
+            // Удаляем старый контейнер
+            try {
+                $this->docker->removeContainer($container['docker_id'], true, false);
+            } catch (\Exception $e) {
+                // Игнорируем если он уже удален
+            }
+
+            // Создаём новый с тем же именем
+            $result = $this->docker->createContainer($config, $container['name']);
+            $newDockerId = $result['Id'] ?? '';
+
+            if (empty($newDockerId)) {
+                Response::error('Не удалось пересоздать контейнер');
+            }
+
+            $this->docker->startContainer($newDockerId);
+
+            // Обновляем в БД
+            $stmt = $db->prepare('UPDATE containers SET docker_id = ?, image = ?, config_json = ? WHERE id = ?');
+            $stmt->execute([$newDockerId, $fullImage, json_encode($config), $id]);
+
+            Security::auditLog('container_update', 'container', $newDockerId, $container['name']);
+            Response::success(['id' => $newDockerId, 'name' => $container['name']], 'Контейнер обновлён');
+        } catch (\Exception $e) {
+            Response::error('Ошибка обновления: ' . $e->getMessage());
         }
     }
 
@@ -197,6 +264,18 @@ class ContainerController {
                     'privileged' => $info['HostConfig']['Privileged'] ?? false,
                     'platform' => $info['Platform'] ?? '',
                 ];
+
+                // Попробуем получить из БД
+                $db = Database::getInstance();
+                $stmt = $db->prepare('SELECT id, config_json, template_id FROM containers WHERE docker_id = ?');
+                $stmt->execute([$id]);
+                $dbContainer = $stmt->fetch();
+                if ($dbContainer) {
+                    $result['db_id'] = $dbContainer['id'];
+                    $result['template_id'] = $dbContainer['template_id'];
+                    $result['config'] = json_decode($dbContainer['config_json'], true);
+                }
+
                 
                 Response::success($result);
             }
