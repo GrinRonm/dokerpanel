@@ -122,6 +122,12 @@ class ContainerController {
             // Запустить
             $this->docker->startContainer($containerId);
 
+            // Если это шаблон Ubuntu Systemd, устанавливаем базовые утилиты в фоне
+            if (strpos($fullImage, 'systemd-ubuntu') !== false) {
+                $cmd = "docker exec -d {$containerId} bash -c 'sleep 5 && apt-get update && apt-get install -y curl wget sudo nano net-tools iproute2'";
+                shell_exec($cmd);
+            }
+
             // Сохранить в БД
             $db = Database::getInstance();
             $stmt = $db->prepare('INSERT INTO containers (docker_id, name, user_id, template_id, image, config_json) VALUES (?, ?, ?, ?, ?, ?)');
