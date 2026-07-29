@@ -59,7 +59,7 @@ class SettingsController {
 
     public function checkUpdate(): void {
         Security::requireRole('admin');
-        require_once BASE_PATH . '/app/Services/UpdateService.php';
+        require_once ROOT_PATH . '/app/Services/UpdateService.php';
         $result = UpdateService::checkUpdates();
         if (isset($result['error'])) {
             Response::error($result['error']);
@@ -70,7 +70,7 @@ class SettingsController {
 
     public function startUpdate(): void {
         Security::requireRole('admin');
-        require_once BASE_PATH . '/app/Services/UpdateService.php';
+        require_once ROOT_PATH . '/app/Services/UpdateService.php';
         if (UpdateService::startUpdate()) {
             Response::success(null, 'Обновление запущено в фоновом режиме. Система будет перезагружена через минуту.');
         } else {

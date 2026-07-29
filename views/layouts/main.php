@@ -23,7 +23,7 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <div class="logo-icon">🐳</div>
+                    <img src="/public/img/logo.png" alt="DockerPanel" style="width: 32px; height: 32px; margin-right: 12px; border-radius: 8px;">
                     <span>DockerPanel</span>
                 </div>
             </div>

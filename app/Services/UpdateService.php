@@ -26,7 +26,7 @@ class UpdateService {
     }
 
     public static function getCurrentVersion(): string {
-        $versionFile = CONFIG_PATH . '/version.php';
+        $versionFile = ROOT_PATH . '/config/version.php';
         if (file_exists($versionFile)) {
             $config = require $versionFile;
             return $config['version'] ?? 'v1.0.0';
@@ -35,7 +35,7 @@ class UpdateService {
     }
 
     public static function startUpdate(): bool {
-        $updateScript = BASE_PATH . '/scripts/update.sh';
+        $updateScript = ROOT_PATH . '/scripts/update.sh';
         if (!file_exists($updateScript)) {
             return false;
         }
