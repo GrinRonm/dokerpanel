@@ -12,6 +12,10 @@ return [
     'auth/logout'   => ['AuthController', 'logout'],
     'auth/check'    => ['AuthController', 'check'],
 
+    // Журнал аудита
+    'audit'         => ['AuditController', 'index'],
+    'audit/list'    => ['AuditController', 'list'],
+
     // Dashboard
     ''              => ['DashboardController', 'index'],
     'dashboard'     => ['DashboardController', 'index'],

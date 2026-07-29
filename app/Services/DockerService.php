@@ -244,6 +244,11 @@ class DockerService {
             }
         }
 
+        // CgroupnsMode (для systemd)
+        if (!empty($config['cgroupns'])) {
+            $hostConfig['CgroupnsMode'] = $config['cgroupns'];
+        }
+
         $body['HostConfig'] = $hostConfig;
 
         return $this->post('/containers/create', $body, $query);

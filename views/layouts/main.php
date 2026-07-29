@@ -77,6 +77,10 @@
                     <span class="nav-icon">👥</span>
                     <span class="nav-text">Пользователи</span>
                 </a>
+                <a class="nav-item" data-page="audit" href="/audit">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">Журнал аудита</span>
+                </a>
                 <a class="nav-item" data-page="settings" href="/settings">
                     <span class="nav-icon">⚙</span>
                     <span class="nav-text">Настройки</span>

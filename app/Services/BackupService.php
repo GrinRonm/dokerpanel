@@ -39,21 +39,11 @@ class BackupService {
         $backupId = $db->lastInsertId();
 
         try {
-            // Commit контейнера в образ
-            $imageName = "dockerpanel-backup:{$backupName}";
-            $output = shell_exec("docker commit {$containerId} {$imageName} 2>&1");
+            $scriptPath = ROOT_PATH . '/scripts/do_backup.php';
+            $cmd = "nohup php " . escapeshellarg($scriptPath) . " " . $backupId . " > /dev/null 2>&1 &";
+            shell_exec($cmd);
 
-            // Сохранить образ в tar
-            shell_exec("docker save -o {$filePath} {$imageName} 2>&1");
-
-            // Удалить временный образ
-            shell_exec("docker rmi {$imageName} 2>&1");
-
-            $size = file_exists($filePath) ? filesize($filePath) : 0;
-            $stmt = $db->prepare('UPDATE backups SET status = ?, file_size = ? WHERE id = ?');
-            $stmt->execute(['completed', $size, $backupId]);
-
-            return ['id' => $backupId, 'name' => $backupName, 'path' => $filePath, 'size' => $size];
+            return ['id' => $backupId, 'name' => $backupName, 'path' => $filePath, 'status' => 'running'];
         } catch (\Exception $e) {
             $stmt = $db->prepare('UPDATE backups SET status = ? WHERE id = ?');
             $stmt->execute(['failed', $backupId]);
@@ -69,15 +59,16 @@ class BackupService {
         $fileName = "volume_{$volumeName}_{$timestamp}.tar.gz";
         $filePath = "{$this->backupPath}/{$fileName}";
 
-        shell_exec("docker run --rm -v {$volumeName}:/data -v {$this->backupPath}:/backup alpine tar -czf /backup/{$fileName} -C /data . 2>&1");
-
-        $size = file_exists($filePath) ? filesize($filePath) : 0;
-
         $db = Database::getInstance();
         $stmt = $db->prepare('INSERT INTO backups (type, name, file_path, file_size, status) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute(['volume', "volume_{$volumeName}", $filePath, $size, 'completed']);
+        $stmt->execute(['volume', "volume_{$volumeName}", $filePath, 0, 'running']);
+        $backupId = $db->lastInsertId();
 
-        return ['id' => $db->lastInsertId(), 'name' => $fileName, 'path' => $filePath, 'size' => $size];
+        $scriptPath = ROOT_PATH . '/scripts/do_backup.php';
+        $cmd = "nohup php " . escapeshellarg($scriptPath) . " " . $backupId . " > /dev/null 2>&1 &";
+        shell_exec($cmd);
+
+        return ['id' => $backupId, 'name' => $fileName, 'path' => $filePath, 'status' => 'running'];
     }
 
     /**

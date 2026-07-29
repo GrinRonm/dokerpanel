@@ -68,17 +68,29 @@ const Containers = {
                 <td>${c.size_rw}</td>
                 <td style="font-size:12px;color:var(--text-secondary)">${App.formatDate(c.created)}</td>
                 <td>
-                    <div class="action-buttons">
+                    <div class="action-buttons d-flex align-items-center gap-1">
                         ${c.state === 'running' ? `
                             <button class="btn btn-icon btn-ghost" title="Терминал" onclick="Containers.openTerminal('${c.id}')">🖥</button>
-                            <button class="btn btn-icon btn-ghost" title="Файлы" onclick="Containers.openFiles('${c.id}')">📁</button>
-                            <button class="btn btn-icon btn-ghost" title="Мониторинг" onclick="Monitor.render('${c.id}')">📊</button>
                             <button class="btn btn-icon btn-ghost" title="Остановить" onclick="Containers.action('${c.id}','stop')">⏹</button>
-                            <button class="btn btn-icon btn-ghost" title="Перезапустить" onclick="Containers.action('${c.id}','restart')">🔄</button>
                         ` : `
+                            <button class="btn btn-icon btn-ghost" title="Запустить" onclick="Containers.action('${c.id}','start')">▶</button>
                         `}
-                        <button class="btn btn-icon btn-ghost" title="Редактировать" onclick="Containers.edit('${c.id}')">✏️</button>
-                        <button class="btn btn-icon btn-ghost text-danger" title="Удалить" onclick="Containers.action('${c.id}','remove')">🗑</button>
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-icon btn-ghost dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding:4px">
+                                ⋮
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: var(--radius-md)">
+                                ${c.state === 'running' ? `
+                                    <li><a class="dropdown-item" href="#" onclick="Containers.openFiles('${c.id}'); return false;">📁 Файлы</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="Monitor.render('${c.id}'); return false;">📊 Мониторинг</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="Containers.action('${c.id}','restart'); return false;">🔄 Перезапустить</a></li>
+                                ` : ''}
+                                <li><a class="dropdown-item" href="#" onclick="Containers.edit('${c.id}'); return false;">✏️ Редактировать</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="Containers.action('${c.id}','remove'); return false;">🗑 Удалить</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </td>
             </tr>
