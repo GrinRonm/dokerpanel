@@ -104,27 +104,37 @@ const TerminalModule = {
 
         this.terminal.writeln('\x1b[36mПодключение к контейнеру...\x1b[0m\r\n');
 
-        this.ws = new WebSocket(wsUrl);
+        if (this.ws) {
+            this.ws.close();
+        }
 
-        this.ws.onopen = () => {
+        const ws = new WebSocket(wsUrl);
+        this.ws = ws;
+
+        ws.onopen = () => {
+            if (this.ws !== ws) return;
             // Отправляем конфигурацию
-            this.ws.send(JSON.stringify({
+            ws.send(JSON.stringify({
                 container_id: containerId,
             }));
             this.terminal.writeln('\x1b[32mПодключено!\x1b[0m\r\n');
             this.sendResize();
         };
 
-        this.ws.onmessage = (event) => {
+        ws.onmessage = (event) => {
+            if (this.ws !== ws) return;
             this.terminal.write(event.data);
         };
 
-        this.ws.onerror = (error) => {
+        ws.onerror = (error) => {
+            if (this.ws !== ws) return;
             this.terminal.writeln('\r\n\x1b[31mОшибка подключения WebSocket\x1b[0m');
         };
 
-        this.ws.onclose = () => {
+        ws.onclose = () => {
+            if (this.ws !== ws) return;
             this.terminal.writeln('\r\n\x1b[33mСоединение закрыто\x1b[0m');
+            this.ws = null;
         };
     },
 

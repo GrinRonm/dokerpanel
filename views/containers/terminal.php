@@ -38,15 +38,16 @@
         }
     });
 
-    // Отключить SPA навигацию для этой страницы
-    const originalInit = App.init;
-    App.init = function() {
-        this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-        this.bindGlobalEvents();
-        // Скрываем sidebar
+    // Скрыть меню
+    document.addEventListener('DOMContentLoaded', () => {
         const sidebar = document.querySelector('.sidebar');
         const main = document.querySelector('.main-content');
         if (sidebar) sidebar.style.display = 'none';
         if (main) main.style.marginLeft = '0';
-    };
+        
+        // Перехватим навигацию чтобы не сломать терминал
+        if (typeof App !== 'undefined') {
+            App.bindNavigation = function() {}; // Отключаем клики по ссылкам
+        }
+    });
 </script>

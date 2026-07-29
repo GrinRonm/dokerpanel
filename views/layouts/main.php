@@ -134,13 +134,13 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <script src="/public/js/app.js"></script>
-    <script src="/public/js/dashboard.js"></script>
-    <script src="/public/js/containers.js"></script>
-    <script src="/public/js/terminal.js"></script>
-    <script src="/public/js/filemanager.js"></script>
-    <script src="/public/js/images.js"></script>
-    <script src="/public/js/modules.js"></script>
-    <script src="/public/js/settings.js"></script>
+    <script src="/public/js/app.js?v=2" defer></script>
+    <script src="/public/js/dashboard.js?v=2" defer></script>
+    <script src="/public/js/containers.js?v=2" defer></script>
+    <script src="/public/js/terminal.js?v=2" defer></script>
+    <script src="/public/js/filemanager.js?v=2" defer></script>
+    <script src="/public/js/images.js?v=2" defer></script>
+    <script src="/public/js/modules.js?v=2" defer></script>
+    <script src="/public/js/settings.js?v=2" defer></script>
 </body>
 </html>

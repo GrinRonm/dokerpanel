@@ -155,10 +155,6 @@ const Backups = {
 };
 
 /**
- * DockerPanel — Settings Module
- */
-const Settings = {
-    async load() {
         const data = await App.get('/settings');
         const s = data.data || {};
         App.setContent(`<div class="fade-in"><div class="page-header"><h1 class="page-title">Настройки</h1></div>
