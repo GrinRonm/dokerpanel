@@ -204,6 +204,12 @@ class ContainerController {
 
             $this->docker->startContainer($newDockerId);
 
+            // Если это шаблон Ubuntu Systemd, устанавливаем базовые утилиты (синхронно, чтобы дождаться установки)
+            if (strpos($fullImage, 'systemd-ubuntu') !== false) {
+                $cmd = "docker exec {$newDockerId} bash -c 'sleep 2 && apt-get update && apt-get install -y curl wget sudo nano net-tools iproute2'";
+                shell_exec($cmd);
+            }
+
             // Обновляем в БД
             $stmt = $db->prepare('UPDATE containers SET docker_id = ?, image = ?, config_json = ? WHERE id = ?');
             $stmt->execute([$newDockerId, $fullImage, json_encode($config), $id]);
