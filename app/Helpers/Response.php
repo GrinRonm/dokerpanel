@@ -47,16 +47,17 @@ class Response {
         extract($data);
         $csrfToken = CsrfMiddleware::getToken();
         
-        // Определяем контент view
         $viewFile = VIEW_PATH . '/' . str_replace('.', '/', $viewName) . '.php';
-        if (!file_exists($viewFile)) {
+        
+        $content = '';
+        if (file_exists($viewFile)) {
+            ob_start();
+            require $viewFile;
+            $content = ob_get_clean();
+        } else if (strpos($viewName, 'auth/') === 0) {
+            // For auth views we strictly require the file to exist
             self::error("View not found: {$viewName}", 500);
         }
-
-        // Рендерим view в буфер
-        ob_start();
-        require $viewFile;
-        $content = ob_get_clean();
 
         // Если это не auth страница — оборачиваем в layout
         if (strpos($viewName, 'auth/') !== 0) {

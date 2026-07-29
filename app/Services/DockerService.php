@@ -236,6 +236,14 @@ class DockerService {
             $hostConfig['Privileged'] = true;
         }
 
+        // Tmpfs (для systemd)
+        if (!empty($config['tmpfs']) && is_array($config['tmpfs'])) {
+            $hostConfig['Tmpfs'] = [];
+            foreach ($config['tmpfs'] as $path) {
+                $hostConfig['Tmpfs'][$path] = "";
+            }
+        }
+
         $body['HostConfig'] = $hostConfig;
 
         return $this->post('/containers/create', $body, $query);
