@@ -1,0 +1,17 @@
+[Unit]
+Description=DockerPanel WebSocket Terminal Server
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/dockerpanel/websocket
+ExecStart=/usr/bin/python3 /var/www/dockerpanel/websocket/terminal_server.py
+Restart=always
+RestartSec=5
+Environment=WS_HOST=0.0.0.0
+Environment=WS_PORT=8765
+
+[Install]
+WantedBy=multi-user.target
