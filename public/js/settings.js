@@ -83,7 +83,7 @@ const Settings = {
                 if (res.data.has_update) {
                     actionArea.innerHTML = `
                         <div class="alert alert-warning mb-3">Доступно новое обновление!</div>
-                        <button class="btn btn-success btn-lg px-4" onclick="SettingsModule.startUpdate()"><i class="bi bi-cloud-download me-2"></i>Обновить сейчас</button>
+                        <button class="btn btn-success btn-lg px-4" onclick="Settings.startUpdate()"><i class="bi bi-cloud-download me-2"></i>Обновить сейчас</button>
                     `;
                 } else {
                     actionArea.innerHTML = `
