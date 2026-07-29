@@ -112,6 +112,22 @@
         </main>
     </div>
 
+    <!-- Permanent Terminal Modal -->
+    <div id="terminal-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 90%; height: 90%; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 class="modal-title">Терминал: <span id="term-host"></span></h3>
+                <div>
+                    <button class="btn btn-sm btn-secondary me-2" onclick="TerminalModule.toggleFullscreen()">⛶ На весь экран</button>
+                    <button class="modal-close" onclick="TerminalModule.hideModal()">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" style="flex: 1; padding: 0; background: #1e1e1e; position: relative;">
+                <div id="terminal-view" style="width: 100%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 

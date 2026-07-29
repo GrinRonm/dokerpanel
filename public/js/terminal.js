@@ -6,10 +6,36 @@ const TerminalModule = {
     terminal: null,
     ws: null,
     fitAddon: null,
+    currentContainerId: null,
+
+    showModal(containerId) {
+        document.getElementById('term-host').textContent = containerId.substring(0, 12);
+        document.getElementById('terminal-modal').classList.add('active');
+        
+        if (this.currentContainerId !== containerId) {
+            this.init(containerId);
+        } else {
+            // Если тот же контейнер, просто подгоняем размер окна
+            setTimeout(() => {
+                if (this.fitAddon) this.fitAddon.fit();
+                if (this.terminal) this.terminal.focus();
+            }, 100);
+        }
+    },
+
+    hideModal() {
+        document.getElementById('terminal-modal').classList.remove('active');
+    },
 
     init(containerId) {
+        this.currentContainerId = containerId;
         const termEl = document.getElementById('terminal-view');
         if (!termEl) return;
+
+        termEl.innerHTML = '';
+        if (this.terminal) {
+            this.terminal.dispose();
+        }
 
         // Инициализация xterm.js
         this.terminal = new Terminal({

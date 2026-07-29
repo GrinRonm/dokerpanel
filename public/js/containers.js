@@ -104,7 +104,7 @@ const Containers = {
     },
 
     openTerminal(id) {
-        window.open(`/containers/terminal?id=${id}`, '_blank');
+        TerminalModule.showModal(id);
     },
 
     openFiles(id) {
