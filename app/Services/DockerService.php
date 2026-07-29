@@ -217,8 +217,12 @@ class DockerService {
                 if (!empty($hostPath)) {
                     $hostConfig['Binds'][] = "{$hostPath}:{$containerPath}";
                 } else {
-                    $body['Volumes'][$containerPath] = (object)[];
+                    if (is_array($body['Volumes'])) $body['Volumes'] = (object)[];
+                    $body['Volumes']->{$containerPath} = (object)[];
                 }
+            }
+            if (is_array($body['Volumes']) && empty($body['Volumes'])) {
+                $body['Volumes'] = (object)[];
             }
         }
 

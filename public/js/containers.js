@@ -139,6 +139,20 @@ const Containers = {
     },
 
     async showCreateForm() {
+        let templatesOptions = '<option value="">-- Не использовать шаблон --</option>';
+        try {
+            const res = await App.get('/templates');
+            if (res && res.data) {
+                // Save globally so we can use the config on change
+                window._loadedTemplates = res.data;
+                res.data.forEach(t => {
+                    templatesOptions += `<option value="${t.id}">${App.esc(t.name)}</option>`;
+                });
+            }
+        } catch(e) {
+            console.error('Failed to load templates', e);
+        }
+
         App.setContent(`
             <div class="fade-in">
                 <div class="page-header">
@@ -151,6 +165,15 @@ const Containers = {
 
                 <div class="card" style="max-width:800px">
                     <form id="create-container-form" onsubmit="Containers.createSubmit(event)">
+                        
+                        <div class="form-group mb-3 pb-3" style="border-bottom: 1px solid var(--border-color)">
+                            <label class="form-label">Выбрать готовый шаблон</label>
+                            <select class="form-control" id="template-select" onchange="Containers.applyTemplate(this.value)">
+                                ${templatesOptions}
+                            </select>
+                            <small class="text-muted">Выбор шаблона автоматически заполнит поля ниже.</small>
+                        </div>
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Имя контейнера *</label>
@@ -250,7 +273,50 @@ const Containers = {
                     </form>
                 </div>
             </div>
+            </div>
         `);
+    },
+
+    applyTemplate(id) {
+        if (!id) return;
+        const form = document.getElementById('create-container-form');
+        const t = (window._loadedTemplates || []).find(x => x.id == id);
+        if (!t) return;
+
+        form.name.value = t.slug + '-' + Math.floor(Math.random() * 1000);
+        form.image.value = t.image;
+        form.tag.value = t.default_tag || 'latest';
+        
+        const c = t.config || {};
+        form.cmd.value = c.cmd || '';
+        form.cpu.value = c.cpu || '1';
+        form.ram.value = c.ram || '512m';
+        form.restart.value = c.restart || 'unless-stopped';
+        form.privileged.checked = !!c.privileged;
+
+        // Clear dynamic fields
+        document.getElementById('ports-container').innerHTML = '';
+        document.getElementById('env-container').innerHTML = '';
+        document.getElementById('volumes-container').innerHTML = '';
+
+        // Populate dynamic fields
+        if (c.ports && c.ports.length) {
+            c.ports.forEach(p => this.addPortRow(p.host || '', p.container || ''));
+        } else {
+            this.addPortRow();
+        }
+
+        if (c.env && c.env.length) {
+            c.env.forEach(e => this.addEnvRow(e.name || '', e.value || ''));
+        } else {
+            this.addEnvRow();
+        }
+
+        if (c.volumes && c.volumes.length) {
+            c.volumes.forEach(v => this.addVolRow(v.host || '', v.container || ''));
+        } else {
+            this.addVolRow();
+        }
     },
 
     async showTerminal() {
@@ -286,37 +352,37 @@ const Containers = {
         setTimeout(() => TerminalModule.init(id), 100);
     },
 
-    addPortRow() {
+    addPortRow(host = '', containerVal = '') {
         const container = document.getElementById('ports-container');
         const row = document.createElement('div');
         row.className = 'form-row mb-1';
         row.innerHTML = `
-            <input type="text" class="form-control" placeholder="Хост" data-port="host">
-            <input type="text" class="form-control" placeholder="Контейнер" data-port="container">
+            <input type="text" class="form-control" placeholder="Хост" data-port="host" value="${App.esc(host)}">
+            <input type="text" class="form-control" placeholder="Контейнер" data-port="container" value="${App.esc(containerVal)}">
             <button type="button" class="btn btn-ghost text-danger" onclick="this.parentElement.remove()">✕</button>
         `;
         container.appendChild(row);
     },
 
-    addEnvRow() {
+    addEnvRow(name = '', value = '') {
         const container = document.getElementById('env-container');
         const row = document.createElement('div');
         row.className = 'form-row mb-1';
         row.innerHTML = `
-            <input type="text" class="form-control" placeholder="Имя" data-env="name">
-            <input type="text" class="form-control" placeholder="Значение" data-env="value">
+            <input type="text" class="form-control" placeholder="Имя" data-env="name" value="${App.esc(name)}">
+            <input type="text" class="form-control" placeholder="Значение" data-env="value" value="${App.esc(value)}">
             <button type="button" class="btn btn-ghost text-danger" onclick="this.parentElement.remove()">✕</button>
         `;
         container.appendChild(row);
     },
 
-    addVolRow() {
+    addVolRow(host = '', containerVal = '') {
         const container = document.getElementById('volumes-container');
         const row = document.createElement('div');
         row.className = 'form-row mb-1';
         row.innerHTML = `
-            <input type="text" class="form-control" placeholder="Путь на хосте" data-vol="host">
-            <input type="text" class="form-control" placeholder="Путь в контейнере" data-vol="container">
+            <input type="text" class="form-control" placeholder="Путь на хосте" data-vol="host" value="${App.esc(host)}">
+            <input type="text" class="form-control" placeholder="Путь в контейнере" data-vol="container" value="${App.esc(containerVal)}">
             <button type="button" class="btn btn-ghost text-danger" onclick="this.parentElement.remove()">✕</button>
         `;
         container.appendChild(row);
