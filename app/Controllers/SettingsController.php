@@ -56,4 +56,25 @@ class SettingsController {
             ]);
         } catch (\Exception $e) { Response::error($e->getMessage()); }
     }
+
+    public function checkUpdate(): void {
+        Security::requireRole('admin');
+        require_once BASE_PATH . '/app/Services/UpdateService.php';
+        $result = UpdateService::checkUpdates();
+        if (isset($result['error'])) {
+            Response::error($result['error']);
+            return;
+        }
+        Response::success($result);
+    }
+
+    public function startUpdate(): void {
+        Security::requireRole('admin');
+        require_once BASE_PATH . '/app/Services/UpdateService.php';
+        if (UpdateService::startUpdate()) {
+            Response::success(null, 'Обновление запущено в фоновом режиме. Система будет перезагружена через минуту.');
+        } else {
+            Response::error('Ошибка запуска обновления.');
+        }
+    }
 }

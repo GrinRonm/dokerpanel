@@ -141,5 +141,6 @@
     <script src="/public/js/filemanager.js"></script>
     <script src="/public/js/images.js"></script>
     <script src="/public/js/modules.js"></script>
+    <script src="/public/js/settings.js"></script>
 </body>
 </html>

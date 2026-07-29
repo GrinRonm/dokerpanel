@@ -120,6 +120,8 @@ return [
     'settings'          => ['SettingsController', 'index'],
     'settings/update'   => ['SettingsController', 'update'],
     'settings/docker'   => ['SettingsController', 'docker'],
+    'settings/check_update' => ['SettingsController', 'checkUpdate'],
+    'settings/start_update' => ['SettingsController', 'startUpdate'],
 
     // Users
     'users'             => ['UserController', 'index'],
