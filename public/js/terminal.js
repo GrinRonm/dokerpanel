@@ -99,8 +99,8 @@ const TerminalModule = {
 
     connect(containerId) {
         const wsHost = window.location.hostname;
-        const wsPort = 8765;
-        const wsUrl = `ws://${wsHost}:${wsPort}`;
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${protocol}://${wsHost}/ws/`;
 
         this.terminal.writeln('\x1b[36mПодключение к контейнеру...\x1b[0m\r\n');
 
