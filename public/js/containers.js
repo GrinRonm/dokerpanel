@@ -419,6 +419,17 @@ const Containers = {
             if (container) volumes.push({ host: host || '', container });
         });
 
+        const templateSelect = document.getElementById('template-select');
+        let tmpfs = [];
+        let cgroupns = '';
+        if (templateSelect && templateSelect.value) {
+            const t = (window._loadedTemplates || []).find(x => x.id == templateSelect.value);
+            if (t && t.config) {
+                tmpfs = t.config.tmpfs || [];
+                cgroupns = t.config.cgroupns || '';
+            }
+        }
+
         const body = {
             name: form.name.value,
             image: form.image.value,
@@ -429,7 +440,7 @@ const Containers = {
             network: form.network.value,
             restart: form.restart.value,
             privileged: form.privileged.checked,
-            ports, env, volumes,
+            ports, env, volumes, tmpfs, cgroupns
         };
 
         try {

@@ -102,6 +102,8 @@ class ContainerController {
                 'env' => $data['env'] ?? [],
                 'ports' => $data['ports'] ?? [],
                 'volumes' => $data['volumes'] ?? [],
+                'tmpfs' => $data['tmpfs'] ?? [],
+                'cgroupns' => $data['cgroupns'] ?? '',
                 'cpu' => $data['cpu'] ?? DEFAULT_CPU_LIMIT,
                 'ram' => $data['ram'] ?? DEFAULT_RAM_LIMIT,
                 'restart' => $data['restart'] ?? 'unless-stopped',
