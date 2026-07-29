@@ -430,22 +430,6 @@ class ContainerController {
         }
     }
 
-    /**
-     * Обновить ресурсы контейнера
-     */
-    public function update(): void {
-        $data = Validator::jsonBody();
-        $id = $data['id'] ?? '';
-        if (empty($id)) Response::error('ID не указан');
-
-        try {
-            $this->docker->updateContainer($id, $data);
-            Security::auditLog('container_update', 'container', $id, json_encode($data));
-            Response::success(null, 'Контейнер обновлён');
-        } catch (\Exception $e) {
-            Response::error('Ошибка: ' . $e->getMessage());
-        }
-    }
 
     /**
      * Импорт существующих контейнеров
