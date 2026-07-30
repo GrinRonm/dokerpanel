@@ -39,6 +39,7 @@ fi
 git clone https://github.com/GrinRonm/dokerpanel.git "$WEB_DIR"
 
 echo -e "\n\033[1;34m[5/6] Настройка прав доступа и базы данных...\033[0m"
+mkdir -p "$WEB_DIR/storage/logs"
 chown -R www-data:www-data "$WEB_DIR"
 chmod -R 775 "$WEB_DIR/storage"
 
