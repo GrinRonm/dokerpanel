@@ -86,6 +86,7 @@ const Containers = {
                                     <li><a class="dropdown-item" href="#" onclick="Monitor.render('${c.id}'); return false;">📊 Мониторинг</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="Containers.action('${c.id}','restart'); return false;">🔄 Перезапустить</a></li>
                                 ` : ''}
+                                <li><a class="dropdown-item" href="#" onclick="Containers.logs('${c.id}'); return false;">📄 Логи</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="Containers.edit('${c.id}'); return false;">✏️ Редактировать</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="#" onclick="Containers.action('${c.id}','remove'); return false;">🗑 Удалить</a></li>
@@ -121,6 +122,21 @@ const Containers = {
 
     openFiles(id) {
         App.navigateTo(`files?id=${id}`);
+    },
+
+    async logs(id) {
+        try {
+            const data = await App.get(`/containers/logs?id=${id}`);
+            const logs = data.data.logs || 'Логи пусты.';
+            App.showModal('Логи контейнера', `
+                <div class="bg-black text-white p-3 rounded text-mono" style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-size: 12px; font-family: var(--font-mono)">${App.esc(logs)}</div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button class="btn btn-primary" onclick="Containers.logs('${id}')"><i class="bi bi-arrow-clockwise me-1"></i>Обновить</button>
+                </div>
+            `, 'lg');
+        } catch (e) {
+            App.error(e.message);
+        }
     },
 
     async showDetail(id) {

@@ -403,6 +403,22 @@ class ContainerController {
     }
 
     /**
+     * Получить логи контейнера
+     */
+    public function logs(): void {
+        $id = $_GET['id'] ?? '';
+        if (!$id) {
+            Response::error('ID контейнера обязателен');
+        }
+        try {
+            $logs = $this->docker->getLogs($id);
+            Response::success(['logs' => $logs]);
+        } catch (\Exception $e) {
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
      * Процессы контейнера
      */
     public function top(): void {

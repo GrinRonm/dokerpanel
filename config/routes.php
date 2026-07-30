@@ -35,6 +35,7 @@ return [
     'containers/update'     => ['ContainerController', 'update'],
     'containers/stats'      => ['ContainerController', 'stats'],
     'containers/top'        => ['ContainerController', 'top'],
+    'containers/logs'       => ['ContainerController', 'logs'],
     'containers/import'     => ['ContainerController', 'import'],
     'containers/terminal'   => ['ContainerController', 'terminal'],
 

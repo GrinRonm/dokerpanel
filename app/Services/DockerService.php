@@ -124,6 +124,23 @@ class DockerService {
     }
 
     /**
+     * Получить логи контейнера
+     */
+    public function getLogs(string $id, int $tail = 200): string {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_UNIX_SOCKET_PATH, '/var/run/docker.sock');
+        curl_setopt($ch, CURLOPT_URL, "http://localhost/containers/{$id}/logs?stdout=true&stderr=true&tail={$tail}");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        // Очистка бинарных заголовков docker logs
+        $response = preg_replace('/[\x00-\x09\x0B-\x1F\x7F]/', '', $response);
+        return $response ?: 'No logs available';
+    }
+
+    /**
      * Создать контейнер
      */
     public function createContainer(array $config, string $name = ''): array {
