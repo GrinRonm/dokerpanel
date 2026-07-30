@@ -86,10 +86,10 @@ server {
 }
 EOF
 
-# Проверяем версию PHP-FPM сокета и обновляем конфиг Nginx
-PHP_SOCK=$(find /var/run/php/ -name "*.sock" | head -n 1)
-if [ ! -z "$PHP_SOCK" ]; then
-    sed -i "s|unix:/var/run/php/php8.3-fpm.sock;|unix:${PHP_SOCK};|g" /etc/nginx/sites-available/dockerpanel
+# Проверяем версию PHP-FPM и обновляем конфиг Nginx
+PHP_VER=$(ls /etc/php/ | head -n 1)
+if [ ! -z "$PHP_VER" ]; then
+    sed -i "s|unix:/var/run/php/php8.3-fpm.sock;|unix:/var/run/php/php${PHP_VER}-fpm.sock;|g" /etc/nginx/sites-available/dockerpanel
 fi
 
 ln -sf /etc/nginx/sites-available/dockerpanel /etc/nginx/sites-enabled/
