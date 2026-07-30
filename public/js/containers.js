@@ -52,21 +52,60 @@ const Containers = {
     },
 
     renderRow(c) {
-        const stateClass = c.state === 'running' ? 'running' : (c.state === 'exited' ? 'stopped' : c.state);
-        const ports = (c.ports || []).join(', ') || '-';
+        if (c.is_pending) {
+            return `
+                <tr>
+                    <td colspan="3">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm text-primary me-3" role="status"></div>
+                            <div>
+                                <div class="fw-bold text-white mb-1">${App.esc(c.name)}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary)">${App.esc(c.image)}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td colspan="4" class="text-start">
+                        <span class="badge bg-primary bg-opacity-25 text-primary">${App.esc(c.status)}</span>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Пожалуйста, подождите...</div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        const stateColors = {
+            running: 'bg-success text-success',
+            exited: 'bg-danger text-danger',
+            created: 'bg-warning text-warning'
+        };
+        const badgeColor = stateColors[c.state] || 'bg-secondary text-secondary';
+        
         return `
             <tr>
                 <td>
-                    <a href="#" onclick="Containers.showDetail('${c.id}');return false" style="font-weight:600;color:var(--text-white)">
-                        ${App.esc(c.name)}
-                    </a>
-                    <div class="text-muted" style="font-size:11px;font-family:var(--font-mono)">${c.short_id}</div>
+                    <div class="d-flex align-items-center">
+                        <div class="status-indicator ${c.state === 'running' ? 'active' : ''} me-3"></div>
+                        <div>
+                            <div class="fw-bold text-white mb-1" style="cursor:pointer" onclick="Containers.detail('${c.id}')">${App.esc(c.name)}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary)">${App.esc(c.image)}</div>
+                        </div>
+                    </div>
                 </td>
-                <td><span class="badge badge-${stateClass}"><span class="badge-dot"></span>${c.state}</span></td>
-                <td><span class="tag">${App.esc(c.image)}</span></td>
-                <td style="font-family:var(--font-mono);font-size:12px">${App.esc(ports)}</td>
-                <td>${c.size_rw}</td>
-                <td style="font-size:12px;color:var(--text-secondary)">${App.formatDate(c.created)}</td>
+                <td>
+                    <span class="badge ${badgeColor} bg-opacity-25 px-2 py-1">${App.esc(c.state)}</span>
+                </td>
+                <td style="font-family: var(--font-mono); font-size: 13px;">
+                    ${c.ports.length > 0 ? c.ports.map(p => `<div class="text-info">${App.esc(p)}</div>`).join('') : '<span class="text-muted">-</span>'}
+                </td>
+                <td style="font-family: var(--font-mono); font-size: 13px;">
+                    ${c.network.length > 0 ? c.network.join(', ') : '<span class="text-muted">-</span>'}
+                </td>
+                <td style="font-size: 13px;">
+                    <div>RW: <span class="text-white">${c.size_rw}</span></div>
+                    <div class="text-muted">Root: ${c.size_root}</div>
+                </td>
+                <td style="font-size: 12px; color: var(--text-secondary)">
+                    ${App.formatDate(c.created)}
+                </td>
                 <td>
                     <div class="action-buttons d-flex align-items-center gap-1">
                         ${c.state === 'running' ? `
@@ -78,6 +117,7 @@ const Containers = {
                             <button class="btn btn-icon btn-ghost" title="Запустить" onclick="Containers.action('${c.id}','start')">▶</button>
                         `}
                         <button class="btn btn-icon btn-ghost" title="Логи" onclick="Containers.logs('${c.id}')">📄</button>
+                        <button class="btn btn-icon btn-ghost" title="Редактировать" onclick="Containers.edit('${c.id}')">✏️</button>
                         <button class="btn btn-icon btn-ghost text-danger" title="Удалить" onclick="Containers.action('${c.id}','remove')">🗑</button>
                     </div>
                 </td>
@@ -551,11 +591,11 @@ const Containers = {
 
         try {
             if (editId) {
-                await App.post('/containers/update', body);
-                App.success('Контейнер обновлён!');
+                const res = await App.post('/containers/update', body);
+                App.success(res.message || 'Контейнер обновлён!');
             } else {
-                await App.post('/containers/create', body);
-                App.success('Контейнер создан!');
+                const res = await App.post('/containers/create', body);
+                App.success(res.message || 'Процесс создания запущен!');
             }
             App.navigateTo('containers');
         } catch (e) {

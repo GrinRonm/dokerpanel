@@ -32,6 +32,27 @@ class ContainerController {
             $containers = $this->docker->listContainers(true);
             $result = [];
 
+            // 1. Сначала добавляем ожидающие контейнеры
+            $db = Database::getInstance();
+            $pending = $db->query('SELECT * FROM pending_containers ORDER BY created_at DESC')->fetchAll();
+            foreach ($pending as $p) {
+                $result[] = [
+                    'id' => 'pending_' . $p['id'],
+                    'short_id' => '...',
+                    'name' => $p['name'],
+                    'image' => $p['image'],
+                    'state' => 'pending',
+                    'status' => $p['status'],
+                    'ports' => [],
+                    'created' => $p['created_at'],
+                    'size_rw' => '0 B',
+                    'size_root' => '0 B',
+                    'network' => [],
+                    'is_pending' => true
+                ];
+            }
+
+            // 2. Добавляем реальные контейнеры
             foreach ($containers as $c) {
                 $ports = [];
                 foreach ($c['Ports'] ?? [] as $p) {
@@ -58,6 +79,7 @@ class ContainerController {
                     'size_rw' => DockerService::formatBytes($c['SizeRw'] ?? 0),
                     'size_root' => DockerService::formatBytes($c['SizeRootFs'] ?? 0),
                     'network' => array_keys($c['NetworkSettings']['Networks'] ?? []),
+                    'is_pending' => false
                 ];
             }
 
@@ -92,9 +114,6 @@ class ContainerController {
             $tag = $data['tag'] ?? 'latest';
             $fullImage = "{$image}:{$tag}";
 
-            // Скачать образ если нет
-            $this->docker->pullImage($image, $tag);
-
             // Конфигурация
             $config = [
                 'image' => $fullImage,
@@ -111,39 +130,31 @@ class ContainerController {
                 'privileged' => $data['privileged'] ?? false,
             ];
 
-            // Создание
-            $result = $this->docker->createContainer($config, $data['name']);
-            $containerId = $result['Id'] ?? '';
-
-            if (empty($containerId)) {
-                Response::error('Не удалось создать контейнер');
-            }
-
-            // Запустить
-            $this->docker->startContainer($containerId);
-
-            // Если это шаблон Ubuntu Systemd, устанавливаем базовые утилиты (синхронно, чтобы дождаться установки)
-            if (strpos($fullImage, 'systemd-ubuntu') !== false) {
-                // Спим 2 сек для старта сети systemd, затем ставим пакеты без -d (синхронно)
-                $cmd = "docker exec {$containerId} bash -c 'sleep 2 && apt-get update && apt-get install -y curl wget sudo nano net-tools iproute2'";
-                shell_exec($cmd);
-            }
-
-            // Сохранить в БД
+            // Сохранить в БД как ожидающий
             $db = Database::getInstance();
-            $stmt = $db->prepare('INSERT INTO containers (docker_id, name, user_id, template_id, image, config_json) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt = $db->prepare('INSERT INTO pending_containers (name, image, status, config_json, user_id, template_id) VALUES (?, ?, ?, ?, ?, ?)');
             $stmt->execute([
-                $containerId,
                 $data['name'],
-                AuthMiddleware::userId(),
-                $data['template_id'] ?? null,
                 $fullImage,
+                'Скачивание образа...',
                 json_encode($config),
+                AuthMiddleware::userId(),
+                $data['template_id'] ?? null
             ]);
+            
+            $pendingId = $db->lastInsertId();
 
-            Security::auditLog('container_create', 'container', $containerId, $data['name']);
+            // Запускаем фоновый процесс создания
+            $cmd = sprintf(
+                "nohup php %s %d > /dev/null 2>&1 &",
+                escapeshellarg(ROOT_PATH . '/scripts/do_create.php'),
+                $pendingId
+            );
+            shell_exec($cmd);
 
-            Response::success(['id' => $containerId, 'name' => $data['name']], 'Контейнер создан');
+            Security::auditLog('container_create_request', 'container', '', $data['name']);
+
+            Response::success(['id' => 'pending_' . $pendingId, 'name' => $data['name']], 'Процесс создания запущен');
         } catch (\Exception $e) {
             Response::error('Ошибка создания: ' . $e->getMessage());
         }

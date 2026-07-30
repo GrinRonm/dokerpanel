@@ -126,7 +126,7 @@ class DockerService {
     /**
      * Получить логи контейнера
      */
-    public function getLogs(string $id, int $tail = 200): string {
+    public function getLogs(string $id, int $tail = 1000): string {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_UNIX_SOCKET_PATH, '/var/run/docker.sock');
         curl_setopt($ch, CURLOPT_URL, "http://localhost/containers/{$id}/logs?stdout=true&stderr=true&tail={$tail}");
