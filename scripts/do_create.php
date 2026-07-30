@@ -4,6 +4,7 @@
  */
 
 define('ROOT_PATH', dirname(__DIR__));
+set_time_limit(0);
 require ROOT_PATH . '/config/config.php';
 require ROOT_PATH . '/config/database.php';
 require ROOT_PATH . '/app/Services/PortService.php';
@@ -64,8 +65,8 @@ try {
 
     // 4. Пост-установка (для системных шаблонов)
     if (strpos($fullImage, 'systemd-ubuntu') !== false) {
-        updateStatus($db, $pendingId, 'Настройка системных утилит (2-3 сек)...');
-        $cmd = "docker exec {$containerId} bash -c 'sleep 2 && apt-get update && apt-get install -y curl wget sudo nano net-tools iproute2' > /dev/null 2>&1";
+        updateStatus($db, $pendingId, 'Настройка системных утилит (может занять до 1 мин)...');
+        $cmd = "docker exec {$containerId} bash -c 'sleep 2 && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq curl wget sudo nano net-tools iproute2' > /dev/null 2>&1";
         shell_exec($cmd);
     }
 

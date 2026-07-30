@@ -12,7 +12,11 @@ class DockerService {
     private string $apiVersion;
 
     public function __construct() {
-        $this->socketPath = DOCKER_SOCKET;
+        $socket = DOCKER_SOCKET;
+        if (strpos($socket, 'unix://') === 0) {
+            $socket = substr($socket, 7);
+        }
+        $this->socketPath = $socket;
         $this->apiVersion = DOCKER_API_VERSION;
     }
 
