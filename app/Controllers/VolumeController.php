@@ -21,7 +21,7 @@ class VolumeController {
                 $mountpoint = $v['Mountpoint'] ?? '';
                 $size = 0;
                 if (!empty($mountpoint) && is_dir($mountpoint)) {
-                    $sizeStr = shell_exec("du -sb " . escapeshellarg($mountpoint) . " 2>/dev/null | awk '{print $1}'") ?? '0';
+                    $sizeStr = shell_exec("sudo du -sb " . escapeshellarg($mountpoint) . " 2>/dev/null | awk '{print $1}'") ?? '0';
                     $size = (int)trim($sizeStr);
                 }
                 $result[] = [
