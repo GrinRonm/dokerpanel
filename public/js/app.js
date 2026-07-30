@@ -89,6 +89,7 @@ const App = {
             'backups': () => Backups.load(),
             'settings': () => Settings.load(),
             'users': () => Users.load(),
+            'audit': () => Audit.load(),
         };
 
         if (moduleMap[moduleName]) {

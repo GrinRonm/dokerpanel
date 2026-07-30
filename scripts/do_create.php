@@ -6,6 +6,7 @@
 define('ROOT_PATH', dirname(__DIR__));
 require ROOT_PATH . '/config/config.php';
 require ROOT_PATH . '/config/database.php';
+require ROOT_PATH . '/app/Services/PortService.php';
 require ROOT_PATH . '/app/Services/DockerService.php';
 
 // Функция логгирования ошибки и выхода
