@@ -28,7 +28,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 echo -e "\n\033[1;34m[3/6] Установка Nginx, PHP 8.x и Python...\033[0m"
-apt-get install -yq nginx sqlite3 php-fpm php-cli php-sqlite3 php-curl php-mbstring python3 python3-pip python3-websockets python3-docker python3-ptyprocess
+apt-get install -yq nginx sqlite3 php-fpm php-cli php-sqlite3 php-curl php-mbstring python3 python3-pip python3-websockets python3-docker python3-ptyprocess cron
 
 echo -e "\n\033[1;34m[4/6] Клонирование репозитория DockerPanel...\033[0m"
 WEB_DIR="/var/www/dockerpanel"
