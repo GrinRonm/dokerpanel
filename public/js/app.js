@@ -365,6 +365,14 @@ const App = {
     setContent(html) {
         const content = document.getElementById('page-content');
         if (content) {
+            if (html.includes('<html')) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const innerContent = doc.getElementById('page-content');
+                if (innerContent) {
+                    html = innerContent.innerHTML;
+                }
+            }
             content.innerHTML = html;
             content.querySelectorAll('.fade-in').forEach(el => {
                 el.style.animationDelay = '0s';
