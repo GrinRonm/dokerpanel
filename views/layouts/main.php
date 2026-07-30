@@ -162,5 +162,6 @@
     <script src="/public/js/images.js?v=2" defer></script>
     <script src="/public/js/modules.js?v=2" defer></script>
     <script src="/public/js/settings.js?v=2" defer></script>
+    <script src="/public/js/audit.js?v=2" defer></script>
 </body>
 </html>
