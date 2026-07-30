@@ -29,10 +29,10 @@ const Containers = {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Имя</th>
+                                    <th>Имя / Образ</th>
                                     <th>Статус</th>
-                                    <th>Образ</th>
                                     <th>Порты</th>
+                                    <th>Сеть</th>
                                     <th>Размер</th>
                                     <th>Создан</th>
                                     <th>Действия</th>
