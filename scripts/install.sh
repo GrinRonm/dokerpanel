@@ -23,10 +23,10 @@ if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
 fi
 
 echo -e "\n\033[1;34m[1/6] Обновление списка пакетов...\033[0m"
-apt-get update -yq
+DEBIAN_FRONTEND=noninteractive apt-get update -yq
 
 echo -e "\n\033[1;34m[2/6] Установка базовых утилит и Docker...\033[0m"
-apt-get install -yq curl wget git unzip sudo
+DEBIAN_FRONTEND=noninteractive apt-get install -yq curl wget git unzip sudo
 if ! command -v docker &> /dev/null; then
     echo "Docker не найден. Устанавливаем Docker..."
     curl -fsSL https://get.docker.com -o get-docker.sh
@@ -35,7 +35,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 echo -e "\n\033[1;34m[3/6] Установка Nginx, PHP 8.x и Python...\033[0m"
-apt-get install -yq nginx sqlite3 php-fpm php-cli php-sqlite3 php-curl php-mbstring python3 python3-pip python3-websockets python3-docker python3-ptyprocess cron
+DEBIAN_FRONTEND=noninteractive apt-get install -yq nginx sqlite3 php-fpm php-cli php-sqlite3 php-curl php-mbstring python3 python3-pip python3-websockets python3-docker python3-ptyprocess cron
 
 echo -e "\n\033[1;34m[4/6] Клонирование репозитория DockerPanel...\033[0m"
 WEB_DIR="/var/www/dockerpanel"
