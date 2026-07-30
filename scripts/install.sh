@@ -15,6 +15,13 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+# Отключаем policy-rc.d, если установка идёт внутри Docker-контейнера
+if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
+    echo -e "\033[1;33m[!] Обнаружен контейнер: отключаем блокировку policy-rc.d...\033[0m"
+    printf '#!/bin/sh\nexit 0\n' > /usr/sbin/policy-rc.d
+    chmod +x /usr/sbin/policy-rc.d
+fi
+
 echo -e "\n\033[1;34m[1/6] Обновление списка пакетов...\033[0m"
 apt-get update -yq
 
