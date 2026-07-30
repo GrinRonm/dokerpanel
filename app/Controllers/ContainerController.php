@@ -35,11 +35,13 @@ class ContainerController {
             // 1. Сначала добавляем ожидающие контейнеры
             $db = Database::getInstance();
             $pending = $db->query('SELECT * FROM pending_containers ORDER BY created_at DESC')->fetchAll();
+            $pendingNames = [];
             foreach ($pending as $p) {
+                $pendingNames[] = ltrim($p['name'], '/');
                 $result[] = [
                     'id' => 'pending_' . $p['id'],
                     'short_id' => '...',
-                    'name' => $p['name'],
+                    'name' => ltrim($p['name'], '/'),
                     'image' => $p['image'],
                     'state' => 'pending',
                     'status' => $p['status'],
@@ -54,6 +56,11 @@ class ContainerController {
 
             // 2. Добавляем реальные контейнеры
             foreach ($containers as $c) {
+                $name = ltrim($c['Names'][0] ?? '', '/');
+                if (in_array($name, $pendingNames)) {
+                    continue; // Пропускаем, так как он еще настраивается в фоне
+                }
+                
                 $ports = [];
                 foreach ($c['Ports'] ?? [] as $p) {
                     $port = '';
