@@ -71,27 +71,14 @@ const Containers = {
                     <div class="action-buttons d-flex align-items-center gap-1">
                         ${c.state === 'running' ? `
                             <button class="btn btn-icon btn-ghost" title="Терминал" onclick="Containers.openTerminal('${c.id}')">🖥</button>
+                            <button class="btn btn-icon btn-ghost" title="Файлы" onclick="Containers.openFiles('${c.id}')">📁</button>
                             <button class="btn btn-icon btn-ghost" title="Остановить" onclick="Containers.action('${c.id}','stop')">⏹</button>
+                            <button class="btn btn-icon btn-ghost" title="Перезапустить" onclick="Containers.action('${c.id}','restart')">🔄</button>
                         ` : `
                             <button class="btn btn-icon btn-ghost" title="Запустить" onclick="Containers.action('${c.id}','start')">▶</button>
                         `}
-                        
-                        <div class="dropdown">
-                            <button class="btn btn-icon btn-ghost dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding:4px">
-                                ⋮
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: var(--radius-md)">
-                                ${c.state === 'running' ? `
-                                    <li><a class="dropdown-item" href="#" onclick="Containers.openFiles('${c.id}'); return false;">📁 Файлы</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="Monitor.render('${c.id}'); return false;">📊 Мониторинг</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="Containers.action('${c.id}','restart'); return false;">🔄 Перезапустить</a></li>
-                                ` : ''}
-                                <li><a class="dropdown-item" href="#" onclick="Containers.logs('${c.id}'); return false;">📄 Логи</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="Containers.edit('${c.id}'); return false;">✏️ Редактировать</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" onclick="Containers.action('${c.id}','remove'); return false;">🗑 Удалить</a></li>
-                            </ul>
-                        </div>
+                        <button class="btn btn-icon btn-ghost" title="Логи" onclick="Containers.logs('${c.id}')">📄</button>
+                        <button class="btn btn-icon btn-ghost text-danger" title="Удалить" onclick="Containers.action('${c.id}','remove')">🗑</button>
                     </div>
                 </td>
             </tr>
@@ -124,18 +111,45 @@ const Containers = {
         App.navigateTo(`files?id=${id}`);
     },
 
-    async logs(id) {
+    async logs(id, autoRefresh = false) {
         try {
             const data = await App.get(`/containers/logs?id=${id}`);
             const logs = data.data.logs || 'Логи пусты.';
+            
+            // Format logs to have some color or just better padding
             App.showModal('Логи контейнера', `
-                <div class="bg-black text-white p-3 rounded text-mono" style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-size: 12px; font-family: var(--font-mono)">${App.esc(logs)}</div>
-                <div class="d-flex justify-content-end mt-3">
-                    <button class="btn btn-primary" onclick="Containers.logs('${id}')"><i class="bi bi-arrow-clockwise me-1"></i>Обновить</button>
+                <div class="bg-black text-white p-3 rounded" style="max-height: 500px; overflow-y: auto; overflow-x: auto; white-space: pre; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace; line-height: 1.4; border: 1px solid var(--bg-glass-border);" id="logs-container">${App.esc(logs)}</div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <label class="d-flex align-items-center gap-2 m-0" style="cursor:pointer; user-select:none;">
+                        <input type="checkbox" id="logs-auto-refresh" class="form-check-input mt-0" ${autoRefresh ? 'checked' : ''} onchange="Containers.toggleLogsAutoRefresh('${id}', this.checked)">
+                        <span class="text-secondary" style="font-size:13px">Автообновление (3 сек)</span>
+                    </label>
+                    <button class="btn btn-primary" onclick="Containers.logs('${id}', document.getElementById('logs-auto-refresh')?.checked)"><i class="bi bi-arrow-clockwise me-1"></i>Обновить</button>
                 </div>
             `, 'lg');
+
+            // Scroll to bottom
+            const container = document.getElementById('logs-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
         } catch (e) {
             App.error(e.message);
+        }
+    },
+
+    toggleLogsAutoRefresh(id, enabled) {
+        if (this._logsInterval) clearInterval(this._logsInterval);
+        if (enabled) {
+            this._logsInterval = setInterval(() => {
+                // Check if modal is still open and checkbox is checked
+                const cb = document.getElementById('logs-auto-refresh');
+                if (cb && cb.checked) {
+                    this.logs(id, true);
+                } else {
+                    clearInterval(this._logsInterval);
+                }
+            }, 3000);
         }
     },
 
